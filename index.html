@@ -315,6 +315,16 @@
             gap: 0.5rem;
             margin-top: 0.5rem;
         }
+        
+        /* Deal status colors */
+        .deal-hot { background-color: #fee2e2; color: #dc2626; }
+        .deal-deposit { background-color: #dbeafe; color: #1d4ed8; }
+        .deal-finalised { background-color: #dcfce7; color: #15803d; }
+        
+        /* Deal indicator colors */
+        .indicator-hot { background-color: #fecaca; }
+        .indicator-deposit { background-color: #bfdbfe; }
+        .indicator-finalised { background-color: #bbf7d0; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -392,6 +402,9 @@
                         <button class="tab-btn py-3 px-4 font-medium text-gray-600 hover:text-kenya-green-600 whitespace-nowrap" data-tab="successful-deliveries">
                             <i class="fas fa-check-circle mr-2"></i>Successful Deliveries
                         </button>
+                        <button class="tab-btn py-3 px-4 font-medium text-gray-600 hover:text-kenya-green-600 whitespace-nowrap" data-tab="deals">
+                            <i class="fas fa-handshake mr-2"></i>Deals
+                        </button>
                         <button class="tab-btn py-3 px-4 font-medium text-gray-600 hover:text-kenya-green-600 whitespace-nowrap" data-tab="admin">
                             <i class="fas fa-user-cog mr-2"></i>Admin Panel
                         </button>
@@ -466,6 +479,278 @@
                     <div class="text-center py-12 text-gray-500">
                         <i class="fas fa-check-circle text-3xl mb-4 text-kenya-green-600"></i>
                         <p>No successful deliveries yet</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Deals Tab -->
+            <div id="deals-tab" class="tab-content hidden fade-in">
+                <div class="mb-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Deals Management</h2>
+                    <p class="text-gray-600">Manage hot deals, deposits, and finalised sales</p>
+                </div>
+                
+                <!-- Deals Sub-tabs -->
+                <div class="border-b border-gray-200 mb-6">
+                    <nav class="flex overflow-x-auto custom-scrollbar" id="dealsTabs">
+                        <button class="deals-tab-btn py-3 px-4 font-medium text-gray-600 hover:text-kenya-green-600 whitespace-nowrap" data-deals-tab="hot-deals">
+                            <i class="fas fa-fire mr-2"></i>Hot Deals
+                        </button>
+                        <button class="deals-tab-btn py-3 px-4 font-medium text-gray-600 hover:text-kenya-green-600 whitespace-nowrap" data-deals-tab="deposits">
+                            <i class="fas fa-money-bill-wave mr-2"></i>Deposits
+                        </button>
+                        <button class="deals-tab-btn py-3 px-4 font-medium text-gray-600 hover:text-kenya-green-600 whitespace-nowrap" data-deals-tab="finalised">
+                            <i class="fas fa-check-double mr-2"></i>Finalised
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Hot Deals Sub-tab -->
+                <div id="hot-deals-tab" class="deals-tab-content fade-in">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Hot Deals</h3>
+                            <p class="text-gray-600">Potential deals that need attention</p>
+                        </div>
+                        <button id="addHotDealBtn" class="mt-4 md:mt-0 bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center">
+                            <i class="fas fa-plus mr-2"></i> Add Hot Deal
+                        </button>
+                    </div>
+                    
+                    <!-- Add Hot Deal Form -->
+                    <div id="addHotDealForm" class="bg-white rounded-xl shadow-lg p-6 card mb-8 hidden">
+                        <h4 class="text-lg font-bold text-gray-800 mb-6 flex items-center justify-between">
+                            <span><i class="fas fa-plus-circle mr-2 text-kenya-green-600"></i> Add New Hot Deal</span>
+                            <button id="closeHotDealForm" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </h4>
+                        
+                        <div id="hotDealError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+                        <div id="hotDealSuccess" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
+                        
+                        <form id="hotDealForm" class="space-y-4">
+                            <!-- Photo Upload -->
+                            <div>
+                                <label class="block text-gray-700 mb-2">Car Photo (Optional)</label>
+                                <div id="hotDealPhotoPreview" class="photo-placeholder">
+                                    <i class="fas fa-car text-4xl"></i>
+                                </div>
+                                <div class="photo-actions">
+                                    <input type="file" id="hotDealPhoto" accept="image/*" class="hidden" />
+                                    <label for="hotDealPhoto" class="photo-upload-btn">
+                                        <i class="fas fa-camera mr-2"></i> Upload Photo
+                                    </label>
+                                    <button type="button" id="removeHotDealPhoto" class="text-red-600 hover:text-red-800 hidden">
+                                        <i class="fas fa-times mr-1"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Make <span class="text-red-500">*</span></label>
+                                    <input type="text" id="hotDealMake" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. Toyota" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Model <span class="text-red-500">*</span></label>
+                                    <input type="text" id="hotDealModel" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. Land Cruiser" required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Year <span class="text-red-500">*</span></label>
+                                    <input type="number" id="hotDealYear" min="2000" max="2024" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. 2022" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Color <span class="text-red-500">*</span></label>
+                                    <input type="text" id="hotDealColor" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. White" required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Budget (KES) <span class="text-red-500">*</span></label>
+                                    <input type="number" id="hotDealBudget" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. 2500000" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Sales Agent <span class="text-red-500">*</span></label>
+                                    <select id="hotDealAgent" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                        <option value="">Select Sales Agent</option>
+                                        <!-- Sales agents will be dynamically added from sales people -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 mb-2">Additional Specs/Notes</label>
+                                <textarea id="hotDealNotes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="Engine size, mileage, special features, etc."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Add Hot Deal
+                                <div id="hotDealSpinner" class="loading-spinner ml-2 hidden"></div>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div id="hotDealsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
+                        <!-- Hot deals will be dynamically added here -->
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-fire text-3xl mb-4 text-red-500"></i>
+                            <p>No hot deals yet</p>
+                            <p class="text-sm">Add a new hot deal to get started</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Deposits Sub-tab -->
+                <div id="deposits-tab" class="deals-tab-content hidden fade-in">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800 mb-2">Deposits</h3>
+                            <p class="text-gray-600">Cars with deposits paid</p>
+                        </div>
+                        <div class="flex space-x-2 mt-4 md:mt-0">
+                            <button id="addDepositBtn" class="bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Deposit
+                            </button>
+                            <button id="importFromHotDealsBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center">
+                                <i class="fas fa-file-import mr-2"></i> Import from Hot Deals
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Add Deposit Form -->
+                    <div id="addDepositForm" class="bg-white rounded-xl shadow-lg p-6 card mb-8 hidden">
+                        <h4 class="text-lg font-bold text-gray-800 mb-6 flex items-center justify-between">
+                            <span><i class="fas fa-money-bill-wave mr-2 text-kenya-green-600"></i> Add New Deposit</span>
+                            <button id="closeDepositForm" class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </h4>
+                        
+                        <div id="depositError" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"></div>
+                        <div id="depositSuccess" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
+                        
+                        <form id="depositForm" class="space-y-4">
+                            <!-- Photo Upload -->
+                            <div>
+                                <label class="block text-gray-700 mb-2">Car Photo (Optional)</label>
+                                <div id="depositPhotoPreview" class="photo-placeholder">
+                                    <i class="fas fa-car text-4xl"></i>
+                                </div>
+                                <div class="photo-actions">
+                                    <input type="file" id="depositPhoto" accept="image/*" class="hidden" />
+                                    <label for="depositPhoto" class="photo-upload-btn">
+                                        <i class="fas fa-camera mr-2"></i> Upload Photo
+                                    </label>
+                                    <button type="button" id="removeDepositPhoto" class="text-red-600 hover:text-red-800 hidden">
+                                        <i class="fas fa-times mr-1"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Make <span class="text-red-500">*</span></label>
+                                    <input type="text" id="depositMake" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. Toyota" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Model <span class="text-red-500">*</span></label>
+                                    <input type="text" id="depositModel" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. Land Cruiser" required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Year <span class="text-red-500">*</span></label>
+                                    <input type="number" id="depositYear" min="2000" max="2024" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. 2022" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Color <span class="text-red-500">*</span></label>
+                                    <input type="text" id="depositColor" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. White" required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Deposit Amount (KES) <span class="text-red-500">*</span></label>
+                                    <input type="number" id="depositAmount" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. 500000" required>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Sales Agent <span class="text-red-500">*</span></label>
+                                    <select id="depositAgent" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                        <option value="">Select Sales Agent</option>
+                                        <!-- Sales agents will be dynamically added from sales people -->
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-700 mb-2">Additional Notes</label>
+                                <textarea id="depositNotes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="Deposit details, client info, etc."></textarea>
+                            </div>
+                            
+                            <button type="submit" class="w-full bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                                <i class="fas fa-save mr-2"></i> Add Deposit
+                                <div id="depositSpinner" class="loading-spinner ml-2 hidden"></div>
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <!-- Import from Hot Deals Modal -->
+                    <div id="importHotDealsModal" class="fixed inset-0 z-50 hidden">
+                        <div class="modal-overlay absolute inset-0"></div>
+                        <div class="flex items-center justify-center min-h-screen p-4">
+                            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in modal-content">
+                                <div class="p-6">
+                                    <h3 class="text-xl font-bold text-gray-800 mb-4">Import from Hot Deals</h3>
+                                    <p class="text-gray-600 mb-4">Select a hot deal to move to deposits:</p>
+                                    
+                                    <div id="hotDealsList" class="max-h-60 overflow-y-auto custom-scrollbar mb-4">
+                                        <!-- Hot deals will be dynamically added here -->
+                                    </div>
+                                    
+                                    <div class="flex space-x-3 mt-6">
+                                        <button id="cancelImport" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition">
+                                            Cancel
+                                        </button>
+                                        <button id="confirmImport" class="flex-1 bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center">
+                                            Import Selected
+                                            <div id="importSpinner" class="loading-spinner ml-2 hidden"></div>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="depositsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
+                        <!-- Deposits will be dynamically added here -->
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-money-bill-wave text-3xl mb-4 text-blue-500"></i>
+                            <p>No deposits yet</p>
+                            <p class="text-sm">Add a deposit or import from hot deals</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Finalised Sub-tab -->
+                <div id="finalised-tab" class="deals-tab-content hidden fade-in">
+                    <div class="mb-8">
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Finalised Deals</h3>
+                        <p class="text-gray-600">Successfully completed sales</p>
+                    </div>
+                    
+                    <div id="finalisedContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
+                        <!-- Finalised deals will be dynamically added here -->
+                        <div class="text-center py-12 text-gray-500">
+                            <i class="fas fa-check-double text-3xl mb-4 text-green-500"></i>
+                            <p>No finalised deals yet</p>
+                            <p class="text-sm">Move deals from deposits to finalised</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -903,6 +1188,9 @@
         let currentUser = null;
         let allCars = [];
         let salesPeople = [];
+        let hotDeals = [];
+        let deposits = [];
+        let finalisedDeals = [];
         let currentCarIdForUpdate = null;
         let currentCarIdForETA = null;
         let currentItemIdForDelete = null;
@@ -910,6 +1198,10 @@
         let editCarId = null;
         let carPhotoFile = null;
         let editCarPhotoFile = null;
+        let hotDealPhotoFile = null;
+        let depositPhotoFile = null;
+        let currentDealsTab = 'hot-deals';
+        let selectedHotDealForImport = null;
         
         // DOM Elements
         const loginScreen = document.getElementById('loginScreen');
@@ -972,6 +1264,40 @@
         const newETADate = document.getElementById('newETADate');
         const deleteMessage = document.getElementById('deleteMessage');
         
+        // Deals elements
+        const dealsTabs = document.querySelectorAll('.deals-tab-btn');
+        const dealsTabContents = document.querySelectorAll('.deals-tab-content');
+        const addHotDealBtn = document.getElementById('addHotDealBtn');
+        const addHotDealForm = document.getElementById('addHotDealForm');
+        const closeHotDealForm = document.getElementById('closeHotDealForm');
+        const hotDealForm = document.getElementById('hotDealForm');
+        const hotDealsContainer = document.getElementById('hotDealsContainer');
+        const hotDealError = document.getElementById('hotDealError');
+        const hotDealSuccess = document.getElementById('hotDealSuccess');
+        const hotDealSpinner = document.getElementById('hotDealSpinner');
+        const hotDealPhotoInput = document.getElementById('hotDealPhoto');
+        const hotDealPhotoPreview = document.getElementById('hotDealPhotoPreview');
+        const removeHotDealPhotoBtn = document.getElementById('removeHotDealPhoto');
+        
+        const addDepositBtn = document.getElementById('addDepositBtn');
+        const addDepositForm = document.getElementById('addDepositForm');
+        const closeDepositForm = document.getElementById('closeDepositForm');
+        const depositForm = document.getElementById('depositForm');
+        const depositsContainer = document.getElementById('depositsContainer');
+        const depositError = document.getElementById('depositError');
+        const depositSuccess = document.getElementById('depositSuccess');
+        const depositSpinner = document.getElementById('depositSpinner');
+        const depositPhotoInput = document.getElementById('depositPhoto');
+        const depositPhotoPreview = document.getElementById('depositPhotoPreview');
+        const removeDepositPhotoBtn = document.getElementById('removeDepositPhoto');
+        const importFromHotDealsBtn = document.getElementById('importFromHotDealsBtn');
+        const importHotDealsModal = document.getElementById('importHotDealsModal');
+        const hotDealsList = document.getElementById('hotDealsList');
+        const cancelImport = document.getElementById('cancelImport');
+        const confirmImport = document.getElementById('confirmImport');
+        const importSpinner = document.getElementById('importSpinner');
+        const finalisedContainer = document.getElementById('finalisedContainer');
+        
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
             // Set default ETA to tomorrow
@@ -988,6 +1314,7 @@
                     showDashboard();
                     loadSalesPeople();
                     loadCars();
+                    loadDeals();
                 } else {
                     // No user is signed in
                     showLoginScreen();
@@ -1005,6 +1332,14 @@
                 tab.addEventListener('click', () => {
                     const tabId = tab.getAttribute('data-tab');
                     switchTab(tabId);
+                });
+            });
+            
+            // Deals tab switching
+            dealsTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-deals-tab');
+                    switchDealsTab(tabId);
                 });
             });
             
@@ -1126,6 +1461,40 @@
             
             // Initialize stage filters
             initializeStageFilters();
+            
+            // Deals functionality
+            addHotDealBtn.addEventListener('click', () => {
+                addHotDealForm.classList.toggle('hidden');
+            });
+            
+            closeHotDealForm.addEventListener('click', () => {
+                addHotDealForm.classList.add('hidden');
+            });
+            
+            hotDealForm.addEventListener('submit', addHotDeal);
+            
+            hotDealPhotoInput.addEventListener('change', handleHotDealPhotoUpload);
+            removeHotDealPhotoBtn.addEventListener('click', removeHotDealPhoto);
+            
+            addDepositBtn.addEventListener('click', () => {
+                addDepositForm.classList.toggle('hidden');
+            });
+            
+            closeDepositForm.addEventListener('click', () => {
+                addDepositForm.classList.add('hidden');
+            });
+            
+            depositForm.addEventListener('submit', addDeposit);
+            
+            depositPhotoInput.addEventListener('change', handleDepositPhotoUpload);
+            removeDepositPhotoBtn.addEventListener('click', removeDepositPhoto);
+            
+            importFromHotDealsBtn.addEventListener('click', showImportHotDealsModal);
+            cancelImport.addEventListener('click', () => {
+                importHotDealsModal.classList.add('hidden');
+            });
+            
+            confirmImport.addEventListener('click', importHotDealToDeposits);
         });
         
         // Show login screen
@@ -1184,6 +1553,7 @@
                 showDashboard();
                 loadSalesPeople();
                 loadCars();
+                loadDeals();
                 
             } catch (error) {
                 console.error('Login error:', error);
@@ -1209,6 +1579,7 @@
                         showDashboard();
                         loadSalesPeople();
                         loadCars();
+                        loadDeals();
                     } catch (createError) {
                         showLoginError(createError.message);
                     }
@@ -1284,7 +1655,38 @@
                 displaySuccessfulDeliveries();
             } else if (tabId === 'admin') {
                 displayManageCars();
+            } else if (tabId === 'deals') {
+                // Make sure deals tab is visible
+                switchDealsTab('hot-deals');
             }
+        }
+        
+        // Switch between deals tabs
+        function switchDealsTab(tabId) {
+            currentDealsTab = tabId;
+            
+            // Update active deals tab button
+            dealsTabs.forEach(tab => {
+                if (tab.getAttribute('data-deals-tab') === tabId) {
+                    tab.classList.add('tab-active');
+                } else {
+                    tab.classList.remove('tab-active');
+                }
+            });
+            
+            // Show active deals tab content
+            dealsTabContents.forEach(tabContent => {
+                if (tabContent.id === `${tabId}-tab`) {
+                    tabContent.classList.remove('hidden');
+                    tabContent.classList.add('fade-in');
+                } else {
+                    tabContent.classList.add('hidden');
+                    tabContent.classList.remove('fade-in');
+                }
+            });
+            
+            // Update sales agent dropdowns
+            updateDealsSalesAgentDropdowns();
         }
         
         // Load sales people from Firestore
@@ -1303,6 +1705,7 @@
                 });
                 
                 updateSalesPeopleUI();
+                updateDealsSalesAgentDropdowns();
             } catch (error) {
                 console.error('Error loading sales people:', error);
                 showAdminError('Failed to load sales people');
@@ -1369,6 +1772,32 @@
             });
         }
         
+        // Update sales agent dropdowns in deals forms
+        function updateDealsSalesAgentDropdowns() {
+            const hotDealAgent = document.getElementById('hotDealAgent');
+            const depositAgent = document.getElementById('depositAgent');
+            
+            if (hotDealAgent) {
+                hotDealAgent.innerHTML = '<option value="">Select Sales Agent</option>';
+                salesPeople.forEach(person => {
+                    const option = document.createElement('option');
+                    option.value = person.id;
+                    option.textContent = person.name;
+                    hotDealAgent.appendChild(option);
+                });
+            }
+            
+            if (depositAgent) {
+                depositAgent.innerHTML = '<option value="">Select Sales Agent</option>';
+                salesPeople.forEach(person => {
+                    const option = document.createElement('option');
+                    option.value = person.id;
+                    option.textContent = person.name;
+                    depositAgent.appendChild(option);
+                });
+            }
+        }
+        
         // Add a new sales person
         async function addSalesPerson() {
             const name = salesPersonName.value.trim();
@@ -1426,6 +1855,73 @@
             } catch (error) {
                 console.error('Error loading cars:', error);
                 showAdminError('Failed to load vehicles');
+            }
+        }
+        
+        // Load deals from Firestore
+        async function loadDeals() {
+            try {
+                // Load hot deals
+                const hotDealsSnapshot = await db.collection('hotDeals')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                hotDeals = [];
+                hotDealsSnapshot.forEach((doc) => {
+                    const dealData = doc.data();
+                    if (dealData.createdAt && dealData.createdAt.toDate) {
+                        dealData.createdAt = dealData.createdAt.toDate().toISOString();
+                    }
+                    
+                    hotDeals.push({
+                        id: doc.id,
+                        ...dealData
+                    });
+                });
+                
+                // Load deposits
+                const depositsSnapshot = await db.collection('deposits')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                deposits = [];
+                depositsSnapshot.forEach((doc) => {
+                    const depositData = doc.data();
+                    if (depositData.createdAt && depositData.createdAt.toDate) {
+                        depositData.createdAt = depositData.createdAt.toDate().toISOString();
+                    }
+                    
+                    deposits.push({
+                        id: doc.id,
+                        ...depositData
+                    });
+                });
+                
+                // Load finalised deals
+                const finalisedSnapshot = await db.collection('finalisedDeals')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                finalisedDeals = [];
+                finalisedSnapshot.forEach((doc) => {
+                    const dealData = doc.data();
+                    if (dealData.createdAt && dealData.createdAt.toDate) {
+                        dealData.createdAt = dealData.createdAt.toDate().toISOString();
+                    }
+                    
+                    finalisedDeals.push({
+                        id: doc.id,
+                        ...dealData
+                    });
+                });
+                
+                displayHotDeals();
+                displayDeposits();
+                displayFinalisedDeals();
+                
+            } catch (error) {
+                console.error('Error loading deals:', error);
+                showHotDealError('Failed to load deals');
             }
         }
         
@@ -1508,6 +2004,69 @@
             deliveredCars.forEach(car => {
                 const card = createCarCard(car);
                 successfulDeliveriesContainer.appendChild(card);
+            });
+        }
+        
+        // Display hot deals
+        function displayHotDeals() {
+            if (hotDeals.length === 0) {
+                hotDealsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <i class="fas fa-fire text-3xl mb-4 text-red-500"></i>
+                        <p class="text-lg">No hot deals yet</p>
+                        <p class="text-sm">Add a new hot deal to get started</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            hotDealsContainer.innerHTML = '';
+            
+            hotDeals.forEach(deal => {
+                const card = createHotDealCard(deal);
+                hotDealsContainer.appendChild(card);
+            });
+        }
+        
+        // Display deposits
+        function displayDeposits() {
+            if (deposits.length === 0) {
+                depositsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <i class="fas fa-money-bill-wave text-3xl mb-4 text-blue-500"></i>
+                        <p class="text-lg">No deposits yet</p>
+                        <p class="text-sm">Add a deposit or import from hot deals</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            depositsContainer.innerHTML = '';
+            
+            deposits.forEach(deposit => {
+                const card = createDepositCard(deposit);
+                depositsContainer.appendChild(card);
+            });
+        }
+        
+        // Display finalised deals
+        function displayFinalisedDeals() {
+            if (finalisedDeals.length === 0) {
+                finalisedContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <i class="fas fa-check-double text-3xl mb-4 text-green-500"></i>
+                        <p class="text-lg">No finalised deals yet</p>
+                        <p class="text-sm">Move deals from deposits to finalised</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            finalisedContainer.innerHTML = '';
+            
+            finalisedDeals.forEach(deal => {
+                const card = createFinalisedDealCard(deal);
+                finalisedContainer.appendChild(card);
             });
         }
         
@@ -1709,6 +2268,390 @@
             return card;
         }
         
+        // Create a hot deal card
+        function createHotDealCard(deal) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl shadow-lg overflow-hidden card';
+            
+            const salesAgent = salesPeople.find(p => p.id === deal.salesAgent);
+            const hasLongDescription = deal.notes && deal.notes.length > 100;
+            const truncatedDescription = hasLongDescription ? deal.notes.substring(0, 100) + '...' : deal.notes;
+            
+            card.innerHTML = `
+                <div class="p-6">
+                    <!-- Car Photo -->
+                    ${deal.photoUrl ? `
+                        <img src="${deal.photoUrl}" alt="${deal.make} ${deal.model}" class="car-photo" onerror="this.src='https://via.placeholder.com/300x150/188301/FFFFFF?text=No+Photo'">
+                    ` : `
+                        <div class="photo-placeholder">
+                            <i class="fas fa-car text-3xl"></i>
+                        </div>
+                    `}
+                    
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">${deal.make} ${deal.model}</h3>
+                            <p class="text-gray-600">${deal.year} • ${deal.color}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-500">Sales Agent</div>
+                            <div class="font-semibold text-gray-800">${salesAgent?.name || 'Unknown'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Status</span>
+                            <span><i class="fas fa-fire text-red-500"></i></span>
+                        </div>
+                        <div class="stage-indicator indicator-hot w-full mb-2"></div>
+                        <div class="font-bold deal-hot text-xs font-medium px-2.5 py-0.5 rounded inline-block">Hot Deal</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <div class="text-sm font-medium text-gray-500">Budget</div>
+                            <div class="font-semibold text-gray-800">KES ${formatNumber(deal.budget)}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-500">Date Added</div>
+                            <div class="font-semibold text-gray-800">${deal.createdAt ? formatDate(deal.createdAt) : 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    ${deal.notes ? `
+                    <div class="mb-6 p-3 bg-red-50 rounded-lg border border-red-100 description-container">
+                        <button class="copy-btn" data-text="${deal.notes.replace(/"/g, '&quot;')}">
+                            <i class="fas fa-copy text-gray-600"></i>
+                        </button>
+                        <div class="text-sm text-gray-700 truncated-text" id="hotdeal-notes-${deal.id}">
+                            ${truncatedDescription}
+                        </div>
+                        ${hasLongDescription ? `
+                        <button class="text-red-600 text-sm font-medium mt-2 read-more-btn" data-id="${deal.id}" data-type="hotdeal" data-full="${deal.notes.replace(/"/g, '&quot;')}">
+                            Read More
+                        </button>` : ''}
+                    </div>` : ''}
+                    
+                    <div class="flex space-x-3">
+                        <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition move-to-deposit" data-id="${deal.id}">
+                            <i class="fas fa-money-bill-wave mr-2"></i>Move to Deposits
+                        </button>
+                        <button class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition delete-hot-deal" data-id="${deal.id}">
+                            <i class="fas fa-trash mr-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const moveToDepositBtn = card.querySelector('.move-to-deposit');
+            const deleteBtn = card.querySelector('.delete-hot-deal');
+            const copyBtn = card.querySelector('.copy-btn');
+            const readMoreBtn = card.querySelector('.read-more-btn');
+            
+            moveToDepositBtn.addEventListener('click', function() {
+                const dealId = this.getAttribute('data-id');
+                moveHotDealToDeposits(dealId);
+            });
+            
+            deleteBtn.addEventListener('click', function() {
+                const dealId = this.getAttribute('data-id');
+                const deal = hotDeals.find(d => d.id === dealId);
+                if (deal) {
+                    showDeleteModal('hotDeal', dealId, `hot deal ${deal.make} ${deal.model}`);
+                }
+            });
+            
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const text = this.getAttribute('data-text');
+                    navigator.clipboard.writeText(text).then(() => {
+                        showHotDealSuccess('Description copied to clipboard!');
+                    });
+                });
+            }
+            
+            if (readMoreBtn) {
+                readMoreBtn.addEventListener('click', function() {
+                    const dealId = this.getAttribute('data-id');
+                    const fullText = this.getAttribute('data-full');
+                    const notesElement = document.getElementById(`hotdeal-notes-${dealId}`);
+                    
+                    if (this.textContent === 'Read More') {
+                        notesElement.textContent = fullText;
+                        notesElement.classList.remove('truncated-text');
+                        notesElement.classList.add('full-text');
+                        this.textContent = 'Read Less';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        const truncated = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
+                        notesElement.textContent = truncated;
+                        notesElement.classList.add('truncated-text');
+                        notesElement.classList.remove('full-text');
+                        this.textContent = 'Read More';
+                    }
+                });
+            }
+            
+            return card;
+        }
+        
+        // Create a deposit card
+        function createDepositCard(deposit) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl shadow-lg overflow-hidden card';
+            
+            const salesAgent = salesPeople.find(p => p.id === deposit.salesAgent);
+            const hasLongDescription = deposit.notes && deposit.notes.length > 100;
+            const truncatedDescription = hasLongDescription ? deposit.notes.substring(0, 100) + '...' : deposit.notes;
+            
+            card.innerHTML = `
+                <div class="p-6">
+                    <!-- Car Photo -->
+                    ${deposit.photoUrl ? `
+                        <img src="${deposit.photoUrl}" alt="${deposit.make} ${deposit.model}" class="car-photo" onerror="this.src='https://via.placeholder.com/300x150/188301/FFFFFF?text=No+Photo'">
+                    ` : `
+                        <div class="photo-placeholder">
+                            <i class="fas fa-car text-3xl"></i>
+                        </div>
+                    `}
+                    
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">${deposit.make} ${deposit.model}</h3>
+                            <p class="text-gray-600">${deposit.year} • ${deposit.color}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-500">Sales Agent</div>
+                            <div class="font-semibold text-gray-800">${salesAgent?.name || 'Unknown'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Status</span>
+                            <span><i class="fas fa-money-bill-wave text-blue-500"></i></span>
+                        </div>
+                        <div class="stage-indicator indicator-deposit w-full mb-2"></div>
+                        <div class="font-bold deal-deposit text-xs font-medium px-2.5 py-0.5 rounded inline-block">Deposit Paid</div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <div class="text-sm font-medium text-gray-500">Deposit Amount</div>
+                            <div class="font-semibold text-gray-800">KES ${formatNumber(deposit.amount)}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-500">Date Added</div>
+                            <div class="font-semibold text-gray-800">${deposit.createdAt ? formatDate(deposit.createdAt) : 'N/A'}</div>
+                        </div>
+                    </div>
+                    
+                    ${deposit.notes ? `
+                    <div class="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-100 description-container">
+                        <button class="copy-btn" data-text="${deposit.notes.replace(/"/g, '&quot;')}">
+                            <i class="fas fa-copy text-gray-600"></i>
+                        </button>
+                        <div class="text-sm text-gray-700 truncated-text" id="deposit-notes-${deposit.id}">
+                            ${truncatedDescription}
+                        </div>
+                        ${hasLongDescription ? `
+                        <button class="text-blue-600 text-sm font-medium mt-2 read-more-btn" data-id="${deposit.id}" data-type="deposit" data-full="${deposit.notes.replace(/"/g, '&quot;')}">
+                            Read More
+                        </button>` : ''}
+                    </div>` : ''}
+                    
+                    <div class="flex space-x-3">
+                        <button class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition move-to-finalised" data-id="${deposit.id}">
+                            <i class="fas fa-check-double mr-2"></i>Finalise Deal
+                        </button>
+                        <button class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition delete-deposit" data-id="${deposit.id}">
+                            <i class="fas fa-trash mr-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const moveToFinalisedBtn = card.querySelector('.move-to-finalised');
+            const deleteBtn = card.querySelector('.delete-deposit');
+            const copyBtn = card.querySelector('.copy-btn');
+            const readMoreBtn = card.querySelector('.read-more-btn');
+            
+            moveToFinalisedBtn.addEventListener('click', function() {
+                const depositId = this.getAttribute('data-id');
+                moveDepositToFinalised(depositId);
+            });
+            
+            deleteBtn.addEventListener('click', function() {
+                const depositId = this.getAttribute('data-id');
+                const deposit = deposits.find(d => d.id === depositId);
+                if (deposit) {
+                    showDeleteModal('deposit', depositId, `deposit ${deposit.make} ${deposit.model}`);
+                }
+            });
+            
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const text = this.getAttribute('data-text');
+                    navigator.clipboard.writeText(text).then(() => {
+                        showDepositSuccess('Description copied to clipboard!');
+                    });
+                });
+            }
+            
+            if (readMoreBtn) {
+                readMoreBtn.addEventListener('click', function() {
+                    const depositId = this.getAttribute('data-id');
+                    const fullText = this.getAttribute('data-full');
+                    const notesElement = document.getElementById(`deposit-notes-${depositId}`);
+                    
+                    if (this.textContent === 'Read More') {
+                        notesElement.textContent = fullText;
+                        notesElement.classList.remove('truncated-text');
+                        notesElement.classList.add('full-text');
+                        this.textContent = 'Read Less';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        const truncated = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
+                        notesElement.textContent = truncated;
+                        notesElement.classList.add('truncated-text');
+                        notesElement.classList.remove('full-text');
+                        this.textContent = 'Read More';
+                    }
+                });
+            }
+            
+            return card;
+        }
+        
+        // Create a finalised deal card
+        function createFinalisedDealCard(deal) {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-xl shadow-lg overflow-hidden card success-delivery';
+            
+            const salesAgent = salesPeople.find(p => p.id === deal.salesAgent);
+            const hasLongDescription = deal.notes && deal.notes.length > 100;
+            const truncatedDescription = hasLongDescription ? deal.notes.substring(0, 100) + '...' : deal.notes;
+            
+            // Check if it came from hot deals or deposits
+            const cameFromHotDeal = deal.originalHotDealId !== undefined;
+            const cameFromDeposit = deal.originalDepositId !== undefined;
+            
+            card.innerHTML = `
+                <div class="p-6">
+                    <!-- Car Photo -->
+                    ${deal.photoUrl ? `
+                        <img src="${deal.photoUrl}" alt="${deal.make} ${deal.model}" class="car-photo" onerror="this.src='https://via.placeholder.com/300x150/188301/FFFFFF?text=No+Photo'">
+                    ` : `
+                        <div class="photo-placeholder">
+                            <i class="fas fa-car text-3xl"></i>
+                        </div>
+                    `}
+                    
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-800">${deal.make} ${deal.model}</h3>
+                            <p class="text-gray-600">${deal.year} • ${deal.color}</p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-500">Sales Agent</div>
+                            <div class="font-semibold text-gray-800">${salesAgent?.name || 'Unknown'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Status</span>
+                            <span><i class="fas fa-check-double text-green-500"></i></span>
+                        </div>
+                        <div class="stage-indicator indicator-finalised w-full mb-2"></div>
+                        <div class="font-bold deal-finalised text-xs font-medium px-2.5 py-0.5 rounded inline-block">Finalised Deal</div>
+                        ${cameFromHotDeal ? `<div class="text-xs text-gray-500 mt-1">Originally from Hot Deals</div>` : ''}
+                        ${cameFromDeposit ? `<div class="text-xs text-gray-500 mt-1">Deposit: KES ${formatNumber(deal.depositAmount || 0)}</div>` : ''}
+                    </div>
+                    
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <div class="text-sm font-medium text-gray-500">Final Price</div>
+                            <div class="font-semibold text-gray-800">${deal.finalPrice ? `KES ${formatNumber(deal.finalPrice)}` : 'Not specified'}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-500">Date Finalised</div>
+                            <div class="font-semibold text-gray-800">${deal.finalisedAt ? formatDate(deal.finalisedAt) : (deal.createdAt ? formatDate(deal.createdAt) : 'N/A')}</div>
+                        </div>
+                    </div>
+                    
+                    ${deal.notes ? `
+                    <div class="mb-6 p-3 bg-green-50 rounded-lg border border-green-100 description-container">
+                        <button class="copy-btn" data-text="${deal.notes.replace(/"/g, '&quot;')}">
+                            <i class="fas fa-copy text-gray-600"></i>
+                        </button>
+                        <div class="text-sm text-gray-700 truncated-text" id="finalised-notes-${deal.id}">
+                            ${truncatedDescription}
+                        </div>
+                        ${hasLongDescription ? `
+                        <button class="text-green-600 text-sm font-medium mt-2 read-more-btn" data-id="${deal.id}" data-type="finalised" data-full="${deal.notes.replace(/"/g, '&quot;')}">
+                            Read More
+                        </button>` : ''}
+                    </div>` : ''}
+                    
+                    <div class="flex space-x-3">
+                        <button class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition delete-finalised" data-id="${deal.id}">
+                            <i class="fas fa-trash mr-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Add event listeners
+            const deleteBtn = card.querySelector('.delete-finalised');
+            const copyBtn = card.querySelector('.copy-btn');
+            const readMoreBtn = card.querySelector('.read-more-btn');
+            
+            deleteBtn.addEventListener('click', function() {
+                const dealId = this.getAttribute('data-id');
+                const deal = finalisedDeals.find(d => d.id === dealId);
+                if (deal) {
+                    showDeleteModal('finalisedDeal', dealId, `finalised deal ${deal.make} ${deal.model}`);
+                }
+            });
+            
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const text = this.getAttribute('data-text');
+                    navigator.clipboard.writeText(text).then(() => {
+                        showAdminSuccess('Description copied to clipboard!');
+                    });
+                });
+            }
+            
+            if (readMoreBtn) {
+                readMoreBtn.addEventListener('click', function() {
+                    const dealId = this.getAttribute('data-id');
+                    const fullText = this.getAttribute('data-full');
+                    const notesElement = document.getElementById(`finalised-notes-${dealId}`);
+                    
+                    if (this.textContent === 'Read More') {
+                        notesElement.textContent = fullText;
+                        notesElement.classList.remove('truncated-text');
+                        notesElement.classList.add('full-text');
+                        this.textContent = 'Read Less';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        const truncated = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
+                        notesElement.textContent = truncated;
+                        notesElement.classList.add('truncated-text');
+                        notesElement.classList.remove('full-text');
+                        this.textContent = 'Read More';
+                    }
+                });
+            }
+            
+            return card;
+        }
+        
         // Show update stage modal
         function showUpdateStageModal(carId) {
             const car = allCars.find(c => c.id === carId);
@@ -1759,6 +2702,44 @@
             deleteModal.classList.remove('hidden');
         }
         
+        // Show import hot deals modal
+        function showImportHotDealsModal() {
+            if (hotDeals.length === 0) {
+                showDepositError('No hot deals available to import');
+                return;
+            }
+            
+            hotDealsList.innerHTML = '';
+            selectedHotDealForImport = null;
+            
+            hotDeals.forEach(deal => {
+                const salesAgent = salesPeople.find(p => p.id === deal.salesAgent);
+                const dealItem = document.createElement('div');
+                dealItem.className = 'p-3 border border-gray-200 rounded-lg mb-2 cursor-pointer hover:bg-gray-50';
+                dealItem.innerHTML = `
+                    <div class="flex items-center">
+                        <input type="radio" name="hotDealSelect" value="${deal.id}" class="mr-3" id="hotDeal-${deal.id}">
+                        <div>
+                            <label for="hotDeal-${deal.id}" class="cursor-pointer">
+                                <div class="font-medium">${deal.make} ${deal.model} (${deal.year})</div>
+                                <div class="text-sm text-gray-600">${deal.color} • Budget: KES ${formatNumber(deal.budget)} • Agent: ${salesAgent?.name || 'Unknown'}</div>
+                            </label>
+                        </div>
+                    </div>
+                `;
+                
+                dealItem.addEventListener('click', function() {
+                    const radio = this.querySelector('input[type="radio"]');
+                    radio.checked = true;
+                    selectedHotDealForImport = deal.id;
+                });
+                
+                hotDealsList.appendChild(dealItem);
+            });
+            
+            importHotDealsModal.classList.remove('hidden');
+        }
+        
         // Handle photo upload
         function handlePhotoUpload(e) {
             const file = e.target.files[0];
@@ -1786,6 +2767,34 @@
             }
         }
         
+        // Handle hot deal photo upload
+        function handleHotDealPhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                hotDealPhotoFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    hotDealPhotoPreview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="photo-preview">`;
+                    removeHotDealPhotoBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Handle deposit photo upload
+        function handleDepositPhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                depositPhotoFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    depositPhotoPreview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="photo-preview">`;
+                    removeDepositPhotoBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
         // Remove photo
         function removePhoto() {
             carPhotoInput.value = '';
@@ -1799,6 +2808,22 @@
             editCarPhotoInput.value = '';
             editCarPhotoFile = null;
             editPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+        }
+        
+        // Remove hot deal photo
+        function removeHotDealPhoto() {
+            hotDealPhotoInput.value = '';
+            hotDealPhotoFile = null;
+            hotDealPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+            removeHotDealPhotoBtn.classList.add('hidden');
+        }
+        
+        // Remove deposit photo
+        function removeDepositPhoto() {
+            depositPhotoInput.value = '';
+            depositPhotoFile = null;
+            depositPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+            removeDepositPhotoBtn.classList.add('hidden');
         }
         
         // Add a new car
@@ -1896,6 +2921,308 @@
                 // Hide loading spinner
                 submitBtn.disabled = false;
                 addCarSpinner.classList.add('hidden');
+            }
+        }
+        
+        // Add a new hot deal
+        async function addHotDeal(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const make = document.getElementById('hotDealMake').value.trim();
+            const model = document.getElementById('hotDealModel').value.trim();
+            const year = parseInt(document.getElementById('hotDealYear').value);
+            const color = document.getElementById('hotDealColor').value.trim();
+            const budget = parseInt(document.getElementById('hotDealBudget').value);
+            const salesAgentId = document.getElementById('hotDealAgent').value;
+            const notes = document.getElementById('hotDealNotes').value.trim();
+            
+            // Validate
+            if (!make || !model || !year || !color || !budget || !salesAgentId) {
+                showHotDealError('Please fill in all required fields');
+                return;
+            }
+            
+            if (budget <= 0) {
+                showHotDealError('Budget must be greater than 0');
+                return;
+            }
+            
+            // Show loading spinner
+            const submitBtn = hotDealForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            hotDealSpinner.classList.remove('hidden');
+            
+            try {
+                // Upload photo if exists
+                let photoUrl = null;
+                if (hotDealPhotoFile) {
+                    const fileName = `hot_deals/${Date.now()}_${hotDealPhotoFile.name}`;
+                    const storageRef = storage.ref(fileName);
+                    const snapshot = await storageRef.put(hotDealPhotoFile);
+                    photoUrl = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Create hot deal object
+                const newHotDeal = {
+                    make,
+                    model,
+                    year,
+                    color,
+                    budget,
+                    salesAgent: salesAgentId,
+                    notes,
+                    photoUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                const docRef = await db.collection('hotDeals').add(newHotDeal);
+                
+                // Reset form
+                hotDealForm.reset();
+                
+                // Reset photo
+                hotDealPhotoFile = null;
+                hotDealPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+                removeHotDealPhotoBtn.classList.add('hidden');
+                hotDealPhotoInput.value = '';
+                
+                // Hide form
+                addHotDealForm.classList.add('hidden');
+                
+                // Show success message
+                showHotDealSuccess(`Hot deal ${make} ${model} added successfully`);
+                
+                // Reload deals
+                await loadDeals();
+                
+            } catch (error) {
+                console.error('Error adding hot deal:', error);
+                showHotDealError('Error adding hot deal: ' + error.message);
+            } finally {
+                // Hide loading spinner
+                submitBtn.disabled = false;
+                hotDealSpinner.classList.add('hidden');
+            }
+        }
+        
+        // Add a new deposit
+        async function addDeposit(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const make = document.getElementById('depositMake').value.trim();
+            const model = document.getElementById('depositModel').value.trim();
+            const year = parseInt(document.getElementById('depositYear').value);
+            const color = document.getElementById('depositColor').value.trim();
+            const amount = parseInt(document.getElementById('depositAmount').value);
+            const salesAgentId = document.getElementById('depositAgent').value;
+            const notes = document.getElementById('depositNotes').value.trim();
+            
+            // Validate
+            if (!make || !model || !year || !color || !amount || !salesAgentId) {
+                showDepositError('Please fill in all required fields');
+                return;
+            }
+            
+            if (amount <= 0) {
+                showDepositError('Deposit amount must be greater than 0');
+                return;
+            }
+            
+            // Show loading spinner
+            const submitBtn = depositForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            depositSpinner.classList.remove('hidden');
+            
+            try {
+                // Upload photo if exists
+                let photoUrl = null;
+                if (depositPhotoFile) {
+                    const fileName = `deposits/${Date.now()}_${depositPhotoFile.name}`;
+                    const storageRef = storage.ref(fileName);
+                    const snapshot = await storageRef.put(depositPhotoFile);
+                    photoUrl = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Create deposit object
+                const newDeposit = {
+                    make,
+                    model,
+                    year,
+                    color,
+                    amount,
+                    salesAgent: salesAgentId,
+                    notes,
+                    photoUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                const docRef = await db.collection('deposits').add(newDeposit);
+                
+                // Reset form
+                depositForm.reset();
+                
+                // Reset photo
+                depositPhotoFile = null;
+                depositPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+                removeDepositPhotoBtn.classList.add('hidden');
+                depositPhotoInput.value = '';
+                
+                // Hide form
+                addDepositForm.classList.add('hidden');
+                
+                // Show success message
+                showDepositSuccess(`Deposit for ${make} ${model} added successfully`);
+                
+                // Reload deals
+                await loadDeals();
+                
+            } catch (error) {
+                console.error('Error adding deposit:', error);
+                showDepositError('Error adding deposit: ' + error.message);
+            } finally {
+                // Hide loading spinner
+                submitBtn.disabled = false;
+                depositSpinner.classList.add('hidden');
+            }
+        }
+        
+        // Move hot deal to deposits
+        async function moveHotDealToDeposits(hotDealId) {
+            const deal = hotDeals.find(d => d.id === hotDealId);
+            if (!deal) return;
+            
+            // Show loading
+            showHotDealSuccess('Moving to deposits...');
+            
+            try {
+                // Create deposit from hot deal
+                const newDeposit = {
+                    make: deal.make,
+                    model: deal.model,
+                    year: deal.year,
+                    color: deal.color,
+                    amount: 0, // Default amount, can be updated later
+                    salesAgent: deal.salesAgent,
+                    notes: deal.notes,
+                    photoUrl: deal.photoUrl,
+                    originalHotDealId: deal.id,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Add to deposits
+                await db.collection('deposits').add(newDeposit);
+                
+                // Delete from hot deals
+                await db.collection('hotDeals').doc(hotDealId).delete();
+                
+                // Show success message
+                showDepositSuccess(`Hot deal moved to deposits successfully`);
+                
+                // Reload deals
+                await loadDeals();
+                
+            } catch (error) {
+                console.error('Error moving hot deal to deposits:', error);
+                showHotDealError('Error moving to deposits: ' + error.message);
+            }
+        }
+        
+        // Import hot deal to deposits from modal
+        async function importHotDealToDeposits() {
+            if (!selectedHotDealForImport) {
+                showDepositError('Please select a hot deal to import');
+                return;
+            }
+            
+            const deal = hotDeals.find(d => d.id === selectedHotDealForImport);
+            if (!deal) return;
+            
+            // Show loading spinner
+            confirmImport.disabled = true;
+            importSpinner.classList.remove('hidden');
+            
+            try {
+                // Create deposit from hot deal
+                const newDeposit = {
+                    make: deal.make,
+                    model: deal.model,
+                    year: deal.year,
+                    color: deal.color,
+                    amount: 0, // Default amount, can be updated later
+                    salesAgent: deal.salesAgent,
+                    notes: deal.notes,
+                    photoUrl: deal.photoUrl,
+                    originalHotDealId: deal.id,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Add to deposits
+                await db.collection('deposits').add(newDeposit);
+                
+                // Delete from hot deals
+                await db.collection('hotDeals').doc(selectedHotDealForImport).delete();
+                
+                // Close modal
+                importHotDealsModal.classList.add('hidden');
+                
+                // Show success message
+                showDepositSuccess(`Hot deal imported to deposits successfully`);
+                
+                // Reload deals
+                await loadDeals();
+                
+            } catch (error) {
+                console.error('Error importing hot deal to deposits:', error);
+                showDepositError('Error importing to deposits: ' + error.message);
+            } finally {
+                // Hide loading spinner
+                confirmImport.disabled = false;
+                importSpinner.classList.add('hidden');
+                selectedHotDealForImport = null;
+            }
+        }
+        
+        // Move deposit to finalised deals
+        async function moveDepositToFinalised(depositId) {
+            const deposit = deposits.find(d => d.id === depositId);
+            if (!deposit) return;
+            
+            // Show loading
+            showDepositSuccess('Finalising deal...');
+            
+            try {
+                // Create finalised deal from deposit
+                const newFinalisedDeal = {
+                    make: deposit.make,
+                    model: deposit.model,
+                    year: deposit.year,
+                    color: deposit.color,
+                    salesAgent: deposit.salesAgent,
+                    notes: deposit.notes,
+                    photoUrl: deposit.photoUrl,
+                    depositAmount: deposit.amount,
+                    originalDepositId: deposit.id,
+                    finalisedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                // Add to finalised deals
+                await db.collection('finalisedDeals').add(newFinalisedDeal);
+                
+                // Delete from deposits
+                await db.collection('deposits').doc(depositId).delete();
+                
+                // Show success message
+                showDepositSuccess(`Deal finalised successfully`);
+                
+                // Reload deals
+                await loadDeals();
+                
+            } catch (error) {
+                console.error('Error moving deposit to finalised:', error);
+                showDepositError('Error finalising deal: ' + error.message);
             }
         }
         
@@ -2173,6 +3500,15 @@
                     
                     await db.collection('salesPeople').doc(currentItemIdForDelete).delete();
                     showAdminSuccess('Sales person deleted successfully');
+                } else if (currentDeleteType === 'hotDeal') {
+                    await db.collection('hotDeals').doc(currentItemIdForDelete).delete();
+                    showHotDealSuccess('Hot deal deleted successfully');
+                } else if (currentDeleteType === 'deposit') {
+                    await db.collection('deposits').doc(currentItemIdForDelete).delete();
+                    showDepositSuccess('Deposit deleted successfully');
+                } else if (currentDeleteType === 'finalisedDeal') {
+                    await db.collection('finalisedDeals').doc(currentItemIdForDelete).delete();
+                    showAdminSuccess('Finalised deal deleted successfully');
                 }
                 
                 // Close modal
@@ -2181,8 +3517,10 @@
                 // Reload data
                 if (currentDeleteType === 'car') {
                     await loadCars();
-                } else {
+                } else if (currentDeleteType === 'salesPerson') {
                     await loadSalesPeople();
+                } else if (currentDeleteType === 'hotDeal' || currentDeleteType === 'deposit' || currentDeleteType === 'finalisedDeal') {
+                    await loadDeals();
                 }
                 
             } catch (error) {
@@ -2331,6 +3669,54 @@
             }, 5000);
         }
         
+        // Show hot deal error message
+        function showHotDealError(message) {
+            hotDealError.textContent = message;
+            hotDealError.classList.remove('hidden');
+            hotDealSuccess.classList.add('hidden');
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                hotDealError.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Show hot deal success message
+        function showHotDealSuccess(message) {
+            hotDealSuccess.textContent = message;
+            hotDealSuccess.classList.remove('hidden');
+            hotDealError.classList.add('hidden');
+            
+            // Hide success after 5 seconds
+            setTimeout(() => {
+                hotDealSuccess.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Show deposit error message
+        function showDepositError(message) {
+            depositError.textContent = message;
+            depositError.classList.remove('hidden');
+            depositSuccess.classList.add('hidden');
+            
+            // Hide error after 5 seconds
+            setTimeout(() => {
+                depositError.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Show deposit success message
+        function showDepositSuccess(message) {
+            depositSuccess.textContent = message;
+            depositSuccess.classList.remove('hidden');
+            depositError.classList.add('hidden');
+            
+            // Hide success after 5 seconds
+            setTimeout(() => {
+                depositSuccess.classList.add('hidden');
+            }, 5000);
+        }
+        
         // Helper function to get stage CSS class
         function getStageClass(stage) {
             switch(stage) {
@@ -2393,6 +3779,11 @@
             if (!dateString || dateString === 'No ETA Available') return 'N/A';
             const date = new Date(dateString);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+        
+        // Helper function to format number with commas
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
         }
         
         // Helper function to calculate days until ETA
