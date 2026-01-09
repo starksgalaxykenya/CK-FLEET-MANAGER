@@ -30,11 +30,17 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-storage-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             font-family: 'Inter', sans-serif;
+        }
+        
+        /* 1. Darker background */
+        body.bg-gray-50 {
+            background-color: #f9fafb !important;
         }
         
         .card {
@@ -160,6 +166,155 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        /* 2. Better mobile scaling */
+        @media (max-width: 640px) {
+            .main-container {
+                padding-left: 1rem;
+                padding-right: 1rem;
+            }
+            
+            .card-grid {
+                grid-template-columns: 1fr !important;
+            }
+            
+            .modal-content {
+                margin: 1rem;
+                width: calc(100% - 2rem);
+            }
+            
+            .flex-mobile-col {
+                flex-direction: column;
+            }
+            
+            .text-mobile-center {
+                text-align: center;
+            }
+            
+            .stage-filter-buttons {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 0.5rem;
+            }
+            
+            .stage-filter-btn {
+                white-space: nowrap;
+            }
+        }
+        
+        @media (min-width: 641px) and (max-width: 1024px) {
+            .card-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+        }
+        
+        /* 3. Edit car form styling */
+        .edit-form-container {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        
+        .edit-form-container.expanded {
+            max-height: 2000px;
+            overflow: visible;
+        }
+        
+        /* 5. Description truncation and copy button */
+        .truncated-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .full-text {
+            display: block;
+            max-height: none;
+        }
+        
+        .description-container {
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            padding: 4px 8px;
+            border-radius: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            cursor: pointer;
+        }
+        
+        .copy-btn:hover {
+            opacity: 1;
+        }
+        
+        /* 6. Stage filter improvements */
+        .stage-filter-container {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: white;
+            padding: 1rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        /* 7. Photo upload and display */
+        .photo-preview {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .photo-placeholder {
+            width: 100%;
+            height: 200px;
+            background-color: #f3f4f6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            color: #6b7280;
+        }
+        
+        .photo-upload-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.5rem 1rem;
+            background-color: #188301;
+            color: white;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-right: 0.5rem;
+        }
+        
+        .photo-upload-btn:hover {
+            background-color: #1a5e1a;
+        }
+        
+        .car-photo {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .photo-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -279,7 +434,18 @@
                     </div>
                 </div>
                 
-                <div id="allCarsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- 6. Stage Filter -->
+                <div class="stage-filter-container mb-6">
+                    <h3 class="font-bold text-gray-800 mb-3">Filter by Stage:</h3>
+                    <div class="flex flex-wrap gap-2 stage-filter-buttons" id="stageFilterButtons">
+                        <button class="stage-filter-btn px-3 py-2 rounded-lg text-sm font-medium bg-kenya-green-600 text-white hover:bg-kenya-green-700 transition" data-stage="">
+                            All Stages
+                        </button>
+                        <!-- Stage buttons will be dynamically added -->
+                    </div>
+                </div>
+                
+                <div id="allCarsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
                     <!-- Cars will be dynamically added here -->
                     <div class="text-center py-12 text-gray-500" id="loadingCars">
                         <div class="loading-spinner mx-auto mb-4"></div>
@@ -295,7 +461,7 @@
                     <p class="text-gray-600">Cars that have been marked as delivered</p>
                 </div>
                 
-                <div id="successfulDeliveriesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div id="successfulDeliveriesContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 card-grid">
                     <!-- Successful deliveries will be dynamically added here -->
                     <div class="text-center py-12 text-gray-500">
                         <i class="fas fa-check-circle text-3xl mb-4 text-kenya-green-600"></i>
@@ -322,6 +488,23 @@
                         <div id="adminSuccess" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4"></div>
                         
                         <form id="addCarForm" class="space-y-4">
+                            <!-- 7. Photo Upload Section -->
+                            <div>
+                                <label class="block text-gray-700 mb-2">Car Photo (Optional)</label>
+                                <div id="photoPreview" class="photo-placeholder">
+                                    <i class="fas fa-car text-4xl"></i>
+                                </div>
+                                <div class="photo-actions">
+                                    <input type="file" id="carPhoto" accept="image/*" class="hidden" />
+                                    <label for="carPhoto" class="photo-upload-btn">
+                                        <i class="fas fa-camera mr-2"></i> Upload Photo
+                                    </label>
+                                    <button type="button" id="removePhoto" class="text-red-600 hover:text-red-800 hidden">
+                                        <i class="fas fa-times mr-1"></i> Remove
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-gray-700 mb-2">Make <span class="text-red-500">*</span></label>
@@ -389,8 +572,13 @@
                                 <input type="text" id="carShipName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. MV Mombasa Express">
                             </div>
                             
+                            <!-- 4. No ETA Available Option -->
                             <div>
                                 <label class="block text-gray-700 mb-2">Next Destination ETA <span class="text-red-500">*</span></label>
+                                <select id="etaType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition mb-2">
+                                    <option value="date">Select Date</option>
+                                    <option value="none">No ETA Available</option>
+                                </select>
                                 <input type="date" id="carETA" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
                             </div>
                             
@@ -406,41 +594,159 @@
                         </form>
                     </div>
                     
-                    <!-- Manage Sales People -->
-                    <div class="bg-white rounded-xl shadow-lg p-6 card">
-                        <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
-                            <i class="fas fa-users mr-3 text-kenya-green-600"></i> Manage Sales People
-                        </h3>
-                        
-                        <div class="mb-6">
-                            <div class="flex space-x-2">
-                                <input type="text" id="salesPersonName" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="Sales person name">
-                                <button id="addSalesPersonBtn" class="bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-medium py-3 px-4 rounded-lg transition">
-                                    <i class="fas fa-plus"></i>
-                                </button>
+                    <!-- Manage Sales People & Edit Form -->
+                    <div>
+                        <!-- Manage Sales People -->
+                        <div class="bg-white rounded-xl shadow-lg p-6 card mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                                <i class="fas fa-users mr-3 text-kenya-green-600"></i> Manage Sales People
+                            </h3>
+                            
+                            <div class="mb-6">
+                                <div class="flex space-x-2">
+                                    <input type="text" id="salesPersonName" class="flex-grow p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="Sales person name">
+                                    <button id="addSalesPersonBtn" class="bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-medium py-3 px-4 rounded-lg transition">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-100">
+                                        <tr>
+                                            <th class="text-left p-3 text-gray-700">Name</th>
+                                            <th class="text-left p-3 text-gray-700">Assigned Vehicles</th>
+                                            <th class="text-left p-3 text-gray-700">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="salesPeopleList">
+                                        <!-- Sales people will be dynamically added here -->
+                                        <tr>
+                                            <td colspan="3" class="p-4 text-center text-gray-500">No sales people added yet</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                         
-                        <div class="overflow-x-auto">
-                            <table class="w-full">
-                                <thead class="bg-gray-100">
-                                    <tr>
-                                        <th class="text-left p-3 text-gray-700">Name</th>
-                                        <th class="text-left p-3 text-gray-700">Assigned Vehicles</th>
-                                        <th class="text-left p-3 text-gray-700">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="salesPeopleList">
-                                    <!-- Sales people will be dynamically added here -->
-                                    <tr>
-                                        <td colspan="3" class="p-4 text-center text-gray-500">No sales people added yet</td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <!-- 3. Edit Car Form -->
+                        <div id="editCarFormContainer" class="edit-form-container bg-white rounded-xl shadow-lg p-6 card">
+                            <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center justify-between">
+                                <span><i class="fas fa-edit mr-3 text-kenya-green-600"></i> Edit Vehicle</span>
+                                <button id="closeEditForm" class="text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </h3>
+                            
+                            <form id="editCarForm" class="space-y-4">
+                                <!-- Photo Upload for Edit -->
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Car Photo</label>
+                                    <div id="editPhotoPreview" class="photo-placeholder">
+                                        <i class="fas fa-car text-4xl"></i>
+                                    </div>
+                                    <div class="photo-actions">
+                                        <input type="file" id="editCarPhoto" accept="image/*" class="hidden" />
+                                        <label for="editCarPhoto" class="photo-upload-btn">
+                                            <i class="fas fa-camera mr-2"></i> Change Photo
+                                        </label>
+                                        <button type="button" id="removeEditPhoto" class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-times mr-1"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Make <span class="text-red-500">*</span></label>
+                                        <input type="text" id="editCarMake" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Model <span class="text-red-500">*</span></label>
+                                        <input type="text" id="editCarModel" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Year <span class="text-red-500">*</span></label>
+                                        <input type="number" id="editCarYear" min="2000" max="2024" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Color <span class="text-red-500">*</span></label>
+                                        <input type="text" id="editCarColor" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Sales Person <span class="text-red-500">*</span></label>
+                                    <select id="editCarSalesPerson" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                        <option value="">Select Sales Person</option>
+                                        <!-- Sales people will be dynamically added here -->
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Current Stage <span class="text-red-500">*</span></label>
+                                    <select id="editCarStage" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" required>
+                                        <option value="Due to ship">Due to ship</option>
+                                        <option value="On voyage">On voyage</option>
+                                        <option value="On port">On port</option>
+                                        <option value="Clearing">Clearing</option>
+                                        <option value="Due to carrier">Due to carrier</option>
+                                        <option value="On carrier">On carrier</option>
+                                        <option value="On transit to Nairobi">On transit to Nairobi</option>
+                                        <option value="Arrived to Nairobi">Arrived to Nairobi</option>
+                                        <option value="Due for delivery">Due for delivery</option>
+                                        <option value="Delivered">Delivered</option>
+                                        <option value="Due for sale in Nairobi">Due for sale in Nairobi</option>
+                                        <option value="Picked by client from Mombasa">Picked by client from Mombasa</option>
+                                    </select>
+                                </div>
+                                
+                                <div id="editVoyageTypeContainer" class="hidden">
+                                    <label class="block text-gray-700 mb-2">Voyage Type <span class="text-red-500">*</span></label>
+                                    <div class="flex space-x-4">
+                                        <label class="flex items-center">
+                                            <input type="radio" name="editVoyageType" value="RORO" class="mr-2" checked>
+                                            <span>RORO</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="radio" name="editVoyageType" value="Container" class="mr-2">
+                                            <span>Container</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div id="editShipNameContainer" class="hidden">
+                                    <label class="block text-gray-700 mb-2">Ship Name</label>
+                                    <input type="text" id="editCarShipName" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="e.g. MV Mombasa Express">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Next Destination ETA <span class="text-red-500">*</span></label>
+                                    <select id="editEtaType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition mb-2">
+                                        <option value="date">Select Date</option>
+                                        <option value="none">No ETA Available</option>
+                                    </select>
+                                    <input type="date" id="editCarETA" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Notes (Optional)</label>
+                                    <textarea id="editCarNotes" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-kenya-green-500 focus:border-kenya-green-500 outline-none transition" placeholder="Additional details about the vehicle"></textarea>
+                                </div>
+                                
+                                <button type="submit" class="w-full bg-kenya-green-600 hover:bg-kenya-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-300 flex items-center justify-center">
+                                    <i class="fas fa-save mr-2"></i> Save Changes
+                                    <div id="editCarSpinner" class="loading-spinner ml-2 hidden"></div>
+                                </button>
+                            </form>
                         </div>
                         
                         <!-- Manage Existing Vehicles -->
-                        <div class="mt-8 pt-6 border-t border-gray-200">
+                        <div class="bg-white rounded-xl shadow-lg p-6 card mt-6">
                             <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
                                 <i class="fas fa-edit mr-3 text-kenya-green-600"></i> Manage Existing Vehicles
                             </h3>
@@ -464,7 +770,7 @@
     <div id="updateStageModal" class="fixed inset-0 z-50 hidden">
         <div class="modal-overlay absolute inset-0"></div>
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in modal-content">
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4">Update Vehicle Stage</h3>
                     <div class="space-y-4">
@@ -521,7 +827,7 @@
     <div id="updateETAModal" class="fixed inset-0 z-50 hidden">
         <div class="modal-overlay absolute inset-0"></div>
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in modal-content">
                 <div class="p-6">
                     <h3 class="text-xl font-bold text-gray-800 mb-4">Update ETA</h3>
                     <div class="space-y-4">
@@ -548,7 +854,7 @@
     <div id="deleteModal" class="fixed inset-0 z-50 hidden">
         <div class="modal-overlay absolute inset-0"></div>
         <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full relative slide-in modal-content">
                 <div class="p-6 text-center">
                     <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                         <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
@@ -586,6 +892,7 @@
         const app = firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
+        const storage = firebase.storage();
         
         // Enable offline persistence
         db.enablePersistence().catch((err) => {
@@ -599,7 +906,10 @@
         let currentCarIdForUpdate = null;
         let currentCarIdForETA = null;
         let currentItemIdForDelete = null;
-        let currentDeleteType = null; // 'car' or 'salesPerson'
+        let currentDeleteType = null;
+        let editCarId = null;
+        let carPhotoFile = null;
+        let editCarPhotoFile = null;
         
         // DOM Elements
         const loginScreen = document.getElementById('loginScreen');
@@ -631,6 +941,26 @@
         const adminError = document.getElementById('adminError');
         const adminSuccess = document.getElementById('adminSuccess');
         const addCarSpinner = document.getElementById('addCarSpinner');
+        
+        // Photo upload elements
+        const carPhotoInput = document.getElementById('carPhoto');
+        const photoPreview = document.getElementById('photoPreview');
+        const removePhotoBtn = document.getElementById('removePhoto');
+        const editCarPhotoInput = document.getElementById('editCarPhoto');
+        const editPhotoPreview = document.getElementById('editPhotoPreview');
+        const removeEditPhotoBtn = document.getElementById('removeEditPhoto');
+        
+        // ETA elements
+        const etaType = document.getElementById('etaType');
+        const carETA = document.getElementById('carETA');
+        const editEtaType = document.getElementById('editEtaType');
+        const editCarETA = document.getElementById('editCarETA');
+        
+        // Edit form elements
+        const editCarFormContainer = document.getElementById('editCarFormContainer');
+        const closeEditForm = document.getElementById('closeEditForm');
+        const editCarForm = document.getElementById('editCarForm');
+        const editCarSpinner = document.getElementById('editCarSpinner');
         
         // Modal elements
         const updateStageModal = document.getElementById('updateStageModal');
@@ -710,6 +1040,60 @@
             searchInput.addEventListener('input', filterCars);
             filterStage.addEventListener('change', filterCars);
             
+            // Photo upload functionality
+            carPhotoInput.addEventListener('change', handlePhotoUpload);
+            removePhotoBtn.addEventListener('click', removePhoto);
+            editCarPhotoInput.addEventListener('change', handleEditPhotoUpload);
+            removeEditPhotoBtn.addEventListener('click', removeEditPhoto);
+            
+            // ETA type selection
+            etaType.addEventListener('change', function() {
+                if (this.value === 'none') {
+                    carETA.value = '';
+                    carETA.disabled = true;
+                    carETA.required = false;
+                } else {
+                    carETA.disabled = false;
+                    carETA.required = true;
+                    if (!carETA.value) {
+                        const tomorrow = new Date();
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        carETA.valueAsDate = tomorrow;
+                    }
+                }
+            });
+            
+            editEtaType.addEventListener('change', function() {
+                if (this.value === 'none') {
+                    editCarETA.value = '';
+                    editCarETA.disabled = true;
+                    editCarETA.required = false;
+                } else {
+                    editCarETA.disabled = false;
+                    editCarETA.required = true;
+                }
+            });
+            
+            // Edit form handling
+            closeEditForm.addEventListener('click', function() {
+                editCarFormContainer.classList.remove('expanded');
+                editCarId = null;
+                editCarPhotoFile = null;
+            });
+            
+            editCarForm.addEventListener('submit', editCarSubmit);
+            
+            // Edit car stage change
+            document.getElementById('editCarStage').addEventListener('change', function() {
+                if (this.value === 'On voyage') {
+                    document.getElementById('editVoyageTypeContainer').classList.remove('hidden');
+                    document.getElementById('editShipNameContainer').classList.remove('hidden');
+                } else {
+                    document.getElementById('editVoyageTypeContainer').classList.add('hidden');
+                    document.getElementById('editShipNameContainer').classList.add('hidden');
+                }
+            });
+            
             // Allow Enter key to login
             passwordInput.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
@@ -739,6 +1123,9 @@
             });
             
             document.getElementById('confirmDelete').addEventListener('click', confirmDelete);
+            
+            // Initialize stage filters
+            initializeStageFilters();
         });
         
         // Show login screen
@@ -933,6 +1320,16 @@
                 carSalesPerson.appendChild(option);
             });
             
+            // Update dropdown in edit car form
+            const editCarSalesPerson = document.getElementById('editCarSalesPerson');
+            editCarSalesPerson.innerHTML = '<option value="">Select Sales Person</option>';
+            salesPeople.forEach(person => {
+                const option = document.createElement('option');
+                option.value = person.id;
+                option.textContent = person.name;
+                editCarSalesPerson.appendChild(option);
+            });
+            
             // Update sales people list in admin panel
             salesPeopleList.innerHTML = '';
             
@@ -1016,10 +1413,6 @@
                     // Convert Firestore timestamp to Date if needed
                     if (carData.createdAt && carData.createdAt.toDate) {
                         carData.createdAt = carData.createdAt.toDate().toISOString();
-                    }
-                    if (carData.eta && typeof carData.eta === 'string') {
-                        // Ensure ETA is in YYYY-MM-DD format
-                        carData.eta = carData.eta.split('T')[0];
                     }
                     
                     allCars.push({
@@ -1141,7 +1534,7 @@
                             <p class="text-sm text-gray-600">${car.color} • ${salesPeople.find(p => p.id === car.salesPerson)?.name || 'Unknown'}</p>
                             <div class="flex items-center mt-2">
                                 <span class="stage-badge ${getStageClass(car.stage)} text-white text-xs font-medium px-2.5 py-0.5 rounded">${car.stage}</span>
-                                <span class="ml-2 text-xs text-gray-500">ETA: ${formatDate(car.eta)}</span>
+                                <span class="ml-2 text-xs text-gray-500">ETA: ${car.eta === 'No ETA Available' ? 'No ETA' : formatDate(car.eta)}</span>
                             </div>
                         </div>
                         <div class="flex space-x-2">
@@ -1182,11 +1575,23 @@
             card.className = `bg-white rounded-xl shadow-lg overflow-hidden card ${car.stage === 'Delivered' ? 'success-delivery' : ''}`;
             
             // Calculate days until ETA
-            const daysUntilETA = calculateDaysUntilETA(car.eta);
+            const daysUntilETA = car.eta && car.eta !== 'No ETA Available' ? calculateDaysUntilETA(car.eta) : null;
             const salesPerson = salesPeople.find(p => p.id === car.salesPerson);
+            const hasLongDescription = car.notes && car.notes.length > 100;
+            const truncatedDescription = hasLongDescription ? car.notes.substring(0, 100) + '...' : car.notes;
             
             card.innerHTML = `
                 <div class="p-6">
+                    <!-- Car Photo -->
+                    ${car.photoUrl ? `
+                        <img src="${car.photoUrl}" alt="${car.make} ${car.model}" class="car-photo" onerror="this.src='https://via.placeholder.com/300x150/188301/FFFFFF?text=No+Photo'">
+                    ` : `
+                        <div class="photo-placeholder">
+                            <i class="fas fa-car text-3xl"></i>
+                        </div>
+                    `}
+                    
+                    <!-- Rest of the car info -->
                     <div class="flex justify-between items-start mb-4">
                         <div>
                             <h3 class="text-xl font-bold text-gray-800">${car.make} ${car.model}</h3>
@@ -1198,6 +1603,7 @@
                         </div>
                     </div>
                     
+                    <!-- Stage indicator -->
                     <div class="mb-6">
                         <div class="flex justify-between text-sm text-gray-600 mb-1">
                             <span>Current Stage</span>
@@ -1209,25 +1615,39 @@
                         ${car.shipName ? `<div class="text-sm text-gray-600 mt-1">Ship: ${car.shipName}</div>` : ''}
                     </div>
                     
+                    <!-- ETA Section -->
                     <div class="flex justify-between items-center mb-4">
                         <div>
                             <div class="text-sm font-medium text-gray-500">Next Destination ETA</div>
-                            <div class="font-semibold ${daysUntilETA <= 3 ? 'text-red-600' : 'text-gray-800'}">
-                                ${formatDate(car.eta)}
+                            <div class="font-semibold ${daysUntilETA && daysUntilETA <= 3 ? 'text-red-600' : 'text-gray-800'}">
+                                ${car.eta === 'No ETA Available' ? 'No ETA Available' : formatDate(car.eta)}
                             </div>
                         </div>
+                        ${car.eta !== 'No ETA Available' && daysUntilETA !== null ? `
                         <div class="text-right">
                             <div class="text-sm font-medium text-gray-500">Days Remaining</div>
                             <div class="font-bold ${daysUntilETA <= 3 ? 'text-red-600' : daysUntilETA <= 7 ? 'text-yellow-600' : 'text-kenya-green-600'}">
                                 ${daysUntilETA} day${daysUntilETA !== 1 ? 's' : ''}
                             </div>
-                        </div>
+                        </div>` : ''}
                     </div>
                     
-                    ${car.notes ? `<div class="mb-6 p-3 bg-kenya-green-50 rounded-lg border border-kenya-green-100">
-                        <div class="text-sm text-gray-700">${car.notes}</div>
+                    <!-- Notes Section with Read More and Copy -->
+                    ${car.notes ? `
+                    <div class="mb-6 p-3 bg-kenya-green-50 rounded-lg border border-kenya-green-100 description-container">
+                        <button class="copy-btn" data-text="${car.notes.replace(/"/g, '&quot;')}">
+                            <i class="fas fa-copy text-gray-600"></i>
+                        </button>
+                        <div class="text-sm text-gray-700 truncated-text" id="notes-${car.id}">
+                            ${truncatedDescription}
+                        </div>
+                        ${hasLongDescription ? `
+                        <button class="text-kenya-green-600 text-sm font-medium mt-2 read-more-btn" data-id="${car.id}" data-full="${car.notes.replace(/"/g, '&quot;')}">
+                            Read More
+                        </button>` : ''}
                     </div>` : ''}
                     
+                    <!-- Action Buttons -->
                     <div class="flex space-x-3">
                         <button class="flex-1 bg-kenya-green-100 hover:bg-kenya-green-200 text-kenya-green-700 font-medium py-2 px-4 rounded-lg transition update-stage" data-id="${car.id}">
                             <i class="fas fa-arrow-right mr-2"></i>Update Stage
@@ -1239,9 +1659,11 @@
                 </div>
             `;
             
-            // Add event listeners to buttons
+            // Add event listeners
             const updateStageBtn = card.querySelector('.update-stage');
             const updateETABtn = card.querySelector('.update-eta');
+            const copyBtn = card.querySelector('.copy-btn');
+            const readMoreBtn = card.querySelector('.read-more-btn');
             
             updateStageBtn.addEventListener('click', function() {
                 const carId = this.getAttribute('data-id');
@@ -1252,6 +1674,37 @@
                 const carId = this.getAttribute('data-id');
                 showUpdateETAModal(carId);
             });
+            
+            if (copyBtn) {
+                copyBtn.addEventListener('click', function() {
+                    const text = this.getAttribute('data-text');
+                    navigator.clipboard.writeText(text).then(() => {
+                        showAdminSuccess('Description copied to clipboard!');
+                    });
+                });
+            }
+            
+            if (readMoreBtn) {
+                readMoreBtn.addEventListener('click', function() {
+                    const carId = this.getAttribute('data-id');
+                    const fullText = this.getAttribute('data-full');
+                    const notesElement = document.getElementById(`notes-${carId}`);
+                    
+                    if (this.textContent === 'Read More') {
+                        notesElement.textContent = fullText;
+                        notesElement.classList.remove('truncated-text');
+                        notesElement.classList.add('full-text');
+                        this.textContent = 'Read Less';
+                        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    } else {
+                        const truncated = fullText.length > 100 ? fullText.substring(0, 100) + '...' : fullText;
+                        notesElement.textContent = truncated;
+                        notesElement.classList.add('truncated-text');
+                        notesElement.classList.remove('full-text');
+                        this.textContent = 'Read More';
+                    }
+                });
+            }
             
             return card;
         }
@@ -1290,7 +1743,11 @@
             if (!car) return;
             
             currentCarIdForETA = carId;
-            newETADate.value = car.eta;
+            if (car.eta && car.eta !== 'No ETA Available') {
+                newETADate.value = car.eta;
+            } else {
+                newETADate.valueAsDate = new Date();
+            }
             updateETAModal.classList.remove('hidden');
         }
         
@@ -1300,6 +1757,48 @@
             currentItemIdForDelete = id;
             deleteMessage.textContent = `Are you sure you want to delete ${name}? This action cannot be undone.`;
             deleteModal.classList.remove('hidden');
+        }
+        
+        // Handle photo upload
+        function handlePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                carPhotoFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    photoPreview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="photo-preview">`;
+                    removePhotoBtn.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Handle edit photo upload
+        function handleEditPhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                editCarPhotoFile = file;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    editPhotoPreview.innerHTML = `<img src="${e.target.result}" alt="Preview" class="photo-preview">`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+        
+        // Remove photo
+        function removePhoto() {
+            carPhotoInput.value = '';
+            carPhotoFile = null;
+            photoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+            removePhotoBtn.classList.add('hidden');
+        }
+        
+        // Remove edit photo
+        function removeEditPhoto() {
+            editCarPhotoInput.value = '';
+            editCarPhotoFile = null;
+            editPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
         }
         
         // Add a new car
@@ -1313,12 +1812,17 @@
             const color = document.getElementById('carColor').value.trim();
             const salesPersonId = document.getElementById('carSalesPerson').value;
             const stage = document.getElementById('carStage').value;
-            const eta = document.getElementById('carETA').value;
+            const eta = etaType.value === 'none' ? 'No ETA Available' : document.getElementById('carETA').value;
             const notes = document.getElementById('carNotes').value.trim();
             
             // Validate
             if (!make || !model || !year || !color || !salesPersonId || !stage || !eta) {
                 showAdminError('Please fill in all required fields');
+                return;
+            }
+            
+            if (etaType.value === 'date' && !document.getElementById('carETA').value) {
+                showAdminError('Please select an ETA date');
                 return;
             }
             
@@ -1331,34 +1835,53 @@
                 shipName = document.getElementById('carShipName').value.trim();
             }
             
-            // Create car object
-            const newCar = {
-                make,
-                model,
-                year,
-                color,
-                salesPerson: salesPersonId,
-                stage,
-                voyageType,
-                shipName,
-                eta,
-                notes,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
             // Show loading spinner
             const submitBtn = addCarForm.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             addCarSpinner.classList.remove('hidden');
             
             try {
+                // Upload photo if exists
+                let photoUrl = null;
+                if (carPhotoFile) {
+                    const fileName = `car_photos/${Date.now()}_${carPhotoFile.name}`;
+                    const storageRef = storage.ref(fileName);
+                    const snapshot = await storageRef.put(carPhotoFile);
+                    photoUrl = await snapshot.ref.getDownloadURL();
+                }
+                
+                // Create car object
+                const newCar = {
+                    make,
+                    model,
+                    year,
+                    color,
+                    salesPerson: salesPersonId,
+                    stage,
+                    voyageType,
+                    shipName,
+                    eta,
+                    notes,
+                    photoUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
                 const docRef = await db.collection('cars').add(newCar);
                 
                 // Reset form
                 addCarForm.reset();
                 document.getElementById('carETA').valueAsDate = new Date(new Date().getTime() + 24 * 60 * 60 * 1000); // Tomorrow
+                etaType.value = 'date';
+                carETA.disabled = false;
+                carETA.required = true;
                 voyageTypeContainer.classList.add('hidden');
                 shipNameContainer.classList.add('hidden');
+                
+                // Reset photo
+                carPhotoFile = null;
+                photoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+                removePhotoBtn.classList.add('hidden');
+                carPhotoInput.value = '';
                 
                 // Show success message
                 showAdminSuccess(`Vehicle ${make} ${model} added successfully`);
@@ -1373,6 +1896,155 @@
                 // Hide loading spinner
                 submitBtn.disabled = false;
                 addCarSpinner.classList.add('hidden');
+            }
+        }
+        
+        // Edit car function
+        async function editCar(carId) {
+            const car = allCars.find(c => c.id === carId);
+            if (!car) return;
+            
+            editCarId = carId;
+            
+            // Populate edit form
+            document.getElementById('editCarMake').value = car.make;
+            document.getElementById('editCarModel').value = car.model;
+            document.getElementById('editCarYear').value = car.year;
+            document.getElementById('editCarColor').value = car.color;
+            document.getElementById('editCarSalesPerson').value = car.salesPerson;
+            document.getElementById('editCarStage').value = car.stage;
+            
+            // Handle voyage type
+            if (car.stage === 'On voyage') {
+                document.getElementById('editVoyageTypeContainer').classList.remove('hidden');
+                document.getElementById('editShipNameContainer').classList.remove('hidden');
+                if (car.voyageType) {
+                    document.querySelector(`input[name="editVoyageType"][value="${car.voyageType}"]`).checked = true;
+                }
+                if (car.shipName) {
+                    document.getElementById('editCarShipName').value = car.shipName;
+                }
+            }
+            
+            // Handle ETA
+            if (car.eta === 'No ETA Available') {
+                document.getElementById('editEtaType').value = 'none';
+                document.getElementById('editCarETA').value = '';
+                document.getElementById('editCarETA').disabled = true;
+            } else {
+                document.getElementById('editEtaType').value = 'date';
+                document.getElementById('editCarETA').value = car.eta;
+                document.getElementById('editCarETA').disabled = false;
+            }
+            
+            // Handle notes
+            document.getElementById('editCarNotes').value = car.notes || '';
+            
+            // Handle photo preview
+            if (car.photoUrl) {
+                editPhotoPreview.innerHTML = `<img src="${car.photoUrl}" alt="${car.make} ${car.model}" class="photo-preview">`;
+            } else {
+                editPhotoPreview.innerHTML = '<i class="fas fa-car text-4xl"></i>';
+            }
+            
+            // Show edit form
+            editCarFormContainer.classList.add('expanded');
+            
+            // Scroll to edit form
+            editCarFormContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Edit car form submission
+        async function editCarSubmit(e) {
+            e.preventDefault();
+            
+            if (!editCarId) return;
+            
+            // Get form values
+            const make = document.getElementById('editCarMake').value.trim();
+            const model = document.getElementById('editCarModel').value.trim();
+            const year = parseInt(document.getElementById('editCarYear').value);
+            const color = document.getElementById('editCarColor').value.trim();
+            const salesPersonId = document.getElementById('editCarSalesPerson').value;
+            const stage = document.getElementById('editCarStage').value;
+            const eta = editEtaType.value === 'none' ? 'No ETA Available' : document.getElementById('editCarETA').value;
+            const notes = document.getElementById('editCarNotes').value.trim();
+            
+            // Validate
+            if (!make || !model || !year || !color || !salesPersonId || !stage || !eta) {
+                showAdminError('Please fill in all required fields');
+                return;
+            }
+            
+            if (editEtaType.value === 'date' && !document.getElementById('editCarETA').value) {
+                showAdminError('Please select an ETA date');
+                return;
+            }
+            
+            // Get voyage type if applicable
+            let voyageType = null;
+            let shipName = null;
+            if (stage === 'On voyage') {
+                const voyageTypeRadio = document.querySelector('input[name="editVoyageType"]:checked');
+                voyageType = voyageTypeRadio ? voyageTypeRadio.value : null;
+                shipName = document.getElementById('editCarShipName').value.trim();
+            }
+            
+            // Show loading spinner
+            const submitBtn = editCarForm.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            editCarSpinner.classList.remove('hidden');
+            
+            try {
+                // Upload new photo if exists
+                let photoUrl = null;
+                const car = allCars.find(c => c.id === editCarId);
+                
+                if (editCarPhotoFile) {
+                    const fileName = `car_photos/${Date.now()}_${editCarPhotoFile.name}`;
+                    const storageRef = storage.ref(fileName);
+                    const snapshot = await storageRef.put(editCarPhotoFile);
+                    photoUrl = await snapshot.ref.getDownloadURL();
+                } else {
+                    photoUrl = car.photoUrl; // Keep existing photo
+                }
+                
+                // Update car object
+                const updateData = {
+                    make,
+                    model,
+                    year,
+                    color,
+                    salesPerson: salesPersonId,
+                    stage,
+                    voyageType,
+                    shipName,
+                    eta,
+                    notes,
+                    photoUrl,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('cars').doc(editCarId).update(updateData);
+                
+                // Show success message
+                showAdminSuccess(`Vehicle ${make} ${model} updated successfully`);
+                
+                // Reload cars
+                await loadCars();
+                
+                // Close edit form
+                editCarFormContainer.classList.remove('expanded');
+                editCarId = null;
+                editCarPhotoFile = null;
+                
+            } catch (error) {
+                console.error('Error updating vehicle:', error);
+                showAdminError('Error updating vehicle: ' + error.message);
+            } finally {
+                // Hide loading spinner
+                submitBtn.disabled = false;
+                editCarSpinner.classList.add('hidden');
             }
         }
         
@@ -1479,16 +2151,6 @@
             }
         }
         
-        // Edit car
-        async function editCar(carId) {
-            const car = allCars.find(c => c.id === carId);
-            if (!car) return;
-            
-            // For this demo, we'll just show a message
-            // In a full implementation, you would populate the form with car data
-            showAdminSuccess(`Edit functionality for ${car.make} ${car.model} would open a pre-filled form in a real application.`);
-        }
-        
         // Confirm delete action
         async function confirmDelete() {
             if (!currentItemIdForDelete || !currentDeleteType) return;
@@ -1568,6 +2230,71 @@
                         <i class="fas fa-search text-3xl mb-4"></i>
                         <p class="text-lg">No vehicles found</p>
                         <p class="text-sm">Try adjusting your search or filter</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            allCarsContainer.innerHTML = '';
+            filteredCars.forEach(car => {
+                const card = createCarCard(car);
+                allCarsContainer.appendChild(card);
+            });
+        }
+        
+        // Initialize stage filters
+        function initializeStageFilters() {
+            const stages = [
+                'Due to ship', 'On voyage', 'On port', 'Clearing', 'Due to carrier',
+                'On carrier', 'On transit to Nairobi', 'Arrived to Nairobi',
+                'Due for delivery', 'Delivered', 'Due for sale in Nairobi',
+                'Picked by client from Mombasa'
+            ];
+            
+            const container = document.getElementById('stageFilterButtons');
+            
+            stages.forEach(stage => {
+                const button = document.createElement('button');
+                button.className = 'stage-filter-btn px-3 py-2 rounded-lg text-sm font-medium bg-gray-200 text-gray-800 hover:bg-gray-300 transition';
+                button.textContent = stage;
+                button.setAttribute('data-stage', stage);
+                
+                button.addEventListener('click', function() {
+                    const selectedStage = this.getAttribute('data-stage');
+                    
+                    // Update active button
+                    document.querySelectorAll('.stage-filter-btn').forEach(btn => {
+                        btn.classList.remove('bg-kenya-green-600', 'text-white');
+                        btn.classList.add('bg-gray-200', 'text-gray-800');
+                    });
+                    
+                    this.classList.remove('bg-gray-200', 'text-gray-800');
+                    this.classList.add('bg-kenya-green-600', 'text-white');
+                    
+                    // Filter cars
+                    filterCarsByStage(selectedStage);
+                });
+                
+                container.appendChild(button);
+            });
+        }
+        
+        // Filter cars by stage
+        function filterCarsByStage(stage) {
+            const cars = allCars.filter(car => car.stage !== 'Delivered');
+            
+            if (stage === '') {
+                displayAllCars();
+                return;
+            }
+            
+            const filteredCars = cars.filter(car => car.stage === stage);
+            
+            if (filteredCars.length === 0) {
+                allCarsContainer.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-500">
+                        <i class="fas fa-car text-3xl mb-4"></i>
+                        <p class="text-lg">No vehicles in "${stage}" stage</p>
                     </div>
                 `;
                 return;
@@ -1663,14 +2390,14 @@
         
         // Helper function to format date
         function formatDate(dateString) {
-            if (!dateString) return 'N/A';
+            if (!dateString || dateString === 'No ETA Available') return 'N/A';
             const date = new Date(dateString);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         }
         
         // Helper function to calculate days until ETA
         function calculateDaysUntilETA(eta) {
-            if (!eta) return 0;
+            if (!eta || eta === 'No ETA Available') return null;
             const today = new Date();
             today.setHours(0, 0, 0, 0);
             const etaDate = new Date(eta);
